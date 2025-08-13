@@ -1,0 +1,52 @@
+
+services:
+  catalog-service:
+    container_name: catalog-service
+    image: ${IMAGE_NAME}
+    build:
+      context: .
+      target: builder
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload --workers 4
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env
+    ports:
+      - 8080:8080
+    depends_on:
+      db:
+        condition: service_started
+    networks:
+      - catalog-api
+
+  db:
+    image: postgres:15-alpine
+    # environment:
+    #   - .env
+    env_file:
+      - .env
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks:
+      - catalog-api
+    ports:
+      - "5555:5432"
+
+  migration:
+    environment:
+      - DATABASE_URL=${DATABASE_URL_DBMATE}
+    image: ${IMAGE_NAME}
+    networks:
+      - catalog-api
+    entrypoint: /bin/sh -c "dbmate wait && dbmate up"
+    depends_on:
+      - db
+      - catalog-service
+    env_file:
+      - .env
+
+volumes:
+  dbdata:
+
+networks:
+  catalog-api:
