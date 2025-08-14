@@ -23,12 +23,12 @@ app.add_middleware(
 app.add_exception_handler(exc_class_or_status_code=RequestValidationError, handler=validation_request_exception_handler)
 
 app.include_router(
-    router=user_router,
-    prefix="/users",
-)
-app.include_router(
     router=auth_router,
     prefix="/authenthicate",
+)
+app.include_router(
+    router=user_router,
+    prefix="/users",
 )
 
 @app.get("/")
