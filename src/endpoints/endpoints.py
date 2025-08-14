@@ -5,17 +5,28 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.crud import product_crud, user_crud
 from src.helpers.db import get_db
 from src.schemas import (ProductCreateSchema, ProductUpdateSchema,
-                         UserCreateSchema, UserUpdateSchema)
+                         UserCreateSchema, UserResponseSchema,
+                         UserUpdateSchema)
 
 router = APIRouter()
 
 
-@router.post("/", response_model=UserCreateSchema)
-async def create(user_in: UserCreateSchema, db: AsyncSession = Depends(get_db)) -> UserCreateSchema:
+@router.post("/", response_model=UserResponseSchema)
+async def create(user_in: UserCreateSchema, db: AsyncSession = Depends(get_db)) -> UserResponseSchema:
     """Register new user."""
     try:
-        return await user_crud.create(db=db, obj_in=user_in.model_dump())
+        if await user_crud.get_by_email(email=user_in.email, db=db):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid email.",
+            )
 
+        user = await user_crud.create(db=db, obj_in=user_in.model_dump())
+
+        return UserResponseSchema.model_validate(user)
+
+    except HTTPException as http_ex:
+        raise http_ex
     except Exception as exc:
         print(exc)
         raise HTTPException(

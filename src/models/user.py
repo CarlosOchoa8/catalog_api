@@ -13,7 +13,11 @@ class User(Base):
         String(255),
         unique=True,
         nullable=False,
-        index=True,
+        index=True
+    )
+    password: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
     )
     user_type: Mapped[str] = mapped_column(
         String(50),
