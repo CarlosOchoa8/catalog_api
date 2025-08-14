@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config.core import core_settings
-from src.endpoints import user_router, auth_router
+from src.endpoints import auth_router, product_router, user_router
 from src.middlewares.exceptions import validation_request_exception_handler
 
 app = FastAPI(root_path="/catalog_api")
@@ -29,6 +29,10 @@ app.include_router(
 app.include_router(
     router=user_router,
     prefix="/users",
+)
+app.include_router(
+    router=product_router,
+    prefix="/products",
 )
 
 @app.get("/")
