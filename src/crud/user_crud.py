@@ -17,7 +17,10 @@ class CRUDUser(CRUDBase):
     :param CRUDBase: base CRUD."""
 
     async def create(self, obj_in: UserCreateSchema | Dict[str, Any], db: AsyncSession) -> User:
-        """Create a User object"""
+        """Create User Obj.
+        :param obj_in: user's data.
+        :param db: Async db session.
+        :return: User obj."""
         obj_in_data = jsonable_encoder(obj_in)
         obj_in_data['password'] = get_password_hash(obj_in_data['password'])
         db_obj = self.model(**obj_in_data)  # type: ignore
