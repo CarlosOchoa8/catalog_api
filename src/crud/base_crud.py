@@ -1,12 +1,10 @@
 import uuid
-from typing import Any, Optional, Union, Dict
+from typing import Any, Dict, Union
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import delete as sql_delete
 from sqlalchemy import select
-from sqlalchemy import update as sql_update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.models import Product, User
 
@@ -18,7 +16,7 @@ class CRUDBase:
         :param model: A SQLAlchemy model class."""
         self.model = model
 
-    async def create(self, db: AsyncSession, obj_in: Dict[str, Any] | dict[str, Any]):
+    async def create(self, obj_in: Dict[str, Any] | dict[str, Any], db: AsyncSession):
         """Create a ModelType object"""
         obj_in_data = jsonable_encoder(obj_in)
         db_obj = self.model(**obj_in_data)
