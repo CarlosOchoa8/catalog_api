@@ -1,5 +1,3 @@
-import base64
-import json
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -25,7 +23,9 @@ AUTH_ACCESS_TOKEN_EXPIRE_MINUTES = AUTHSETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 def is_valid_password(password: str) -> Any:
-    """The result of matching the password against the regex pattern."""
+    """Validate password against regex pattern rules.\n
+    :param password: Plain text password to validate.\n
+    :return: Match object if valid."""
     regex = re.compile(
         r"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%&*._])(?!.*\s).{8,25}$"
     )
@@ -33,17 +33,26 @@ def is_valid_password(password: str) -> Any:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """bool: True if the plain password matches the hashed password, False otherwise."""
+    """Verify plain password against hashed password.
+    :param plain_password: Plain text password to verify.
+    :param hashed_password: Hashed password from database.
+    :return: True if passwords match, False otherwise."""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(plain_password: str) -> str:
-    """Returns password hashed."""
+    """Generate hash from plain text password.\n
+    :param plain_password: Plain text password to hash.\n
+    :return: Hashed password string."""
     return pwd_context.hash(plain_password)
 
 
 async def authenticate_user(email: str, password: str, db: AsyncSession) -> models.User | bool:
-    """Return user if credential validation is True."""
+    """Authenticate user by email and password validation.\n
+    :param email: User email address.\n
+    :param password: Plain text password.\n
+    :param db: Async database session.\n
+    :return: User object if credentials are valid, False otherwise."""
     result = await db.execute(select(models.User).where(models.User.email == email))
     user = result.scalar_one_or_none()
     stmt = select(models.User).where(models.User.email == email)
@@ -58,7 +67,10 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Security(HTTPBearer())
 ) -> models.User:
-    """Returns user logged object"""
+    """Extract and validate current user from JWT token.\n
+    :param db: Async database session dependency.\n
+    :param credentials: HTTP Bearer token credentials.\n
+    :return: Authenticated user object."""
     try:
         token = credentials.credentials
         payload = jwt.decode(token, AUTH_SECRET_KEY, algorithms=[AUTH_ALGORITHM])
@@ -89,19 +101,26 @@ async def get_current_user(
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    """Returns The generated access token."""
+    """Create JWT access token with expiration time.
+    :param data: Payload data to encode in token.
+    :param expires_delta: Custom expiration time delta.
+    :return: Encoded JWT token string."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
 
-    to_encode.update({"exp": expire})
+    to_encode["exp"] = expire
     return jwt.encode(to_encode, AUTH_SECRET_KEY, algorithm=AUTH_ALGORITHM)
 
 
 async def generate_token(db: AsyncSession, email: str, password: str) -> str:
-    """Generate a token for a user."""
+    """Generate JWT access token for authenticated user.
+    :param db: Async database session.
+    :param email: User email address.
+    :param password: Plain text password.
+    :return: JWT access token string."""
     db_user = await authenticate_user(email=email, password=password, db=db)
 
     if db_user:
@@ -120,7 +139,9 @@ async def generate_token(db: AsyncSession, email: str, password: str) -> str:
 
 
 async def validate_token(token: str) -> None:
-    """Validates token according his generations params"""
+    """Validate JWT token signature and expiration.
+    :param token: JWT token string to validate.
+    :return: None if valid, JSONResponse with error if invalid."""
     try:
         jwt.decode(token, AUTH_SECRET_KEY, algorithms=[AUTH_ALGORITHM])
     except exceptions.ExpiredSignatureError:
@@ -137,7 +158,9 @@ async def validate_token(token: str) -> None:
 
 
 async def require_admin_user(current_user: models.User = Depends(get_current_user)) -> models.User:
-    """Require user to be admin."""
+    """Require authenticated user to have admin privileges.
+    :param current_user: Current authenticated user dependency.
+    :return: User object if admin, raises exception otherwise."""
     if current_user.user_type != UserType.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
