@@ -8,6 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import exceptions, jwt
 from passlib.context import CryptContext
 from sqlalchemy import select
+from sqlalchemy.orm import defer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import models
@@ -82,8 +83,10 @@ async def get_current_user(
                 detail="Could not validate credentials"
             )
 
-        result = await db.execute(select(models.User).where(models.User.email == user_email))
-        user = result.scalar_one_or_none()
+        stmt = select(models.User).options(
+            defer(models.User.password)
+            ).where(models.User.email == user_email)
+        user = await db.scalar(stmt)
 
         if user is None:
             raise HTTPException(

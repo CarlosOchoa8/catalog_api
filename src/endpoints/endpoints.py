@@ -9,6 +9,7 @@ from src.schemas import (ProductCreateSchema, ProductUpdateSchema,
                          UserCreateSchema, UserResponseSchema,
                          UserUpdateSchema)
 from src.services.auth import get_current_user
+from src.utils.enumerators import UserType
 
 router = APIRouter()
 
@@ -21,6 +22,12 @@ async def create(
     ) -> UserResponseSchema:
     """Register new user."""
     try:
+        if current_user.user_type == UserType.ADMIN.value:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You're not able to perform this.",
+            )
+
         if await user_crud.get_by_email(email=user_in.email, db=db):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
