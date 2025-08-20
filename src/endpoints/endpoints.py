@@ -9,9 +9,12 @@ from src.schemas import (ProductCreateSchema, ProductResponseSchema,
                          ProductUpdateSchema, UserCreateSchema,
                          UserResponseSchema)
 from src.services.auth import get_current_user
+from src.services.auth.services import require_admin_user
 from src.utils.enumerators import UserType
 
+
 user_router = APIRouter()
+
 
 @user_router.post("/", response_model=UserResponseSchema)
 async def create_user(
@@ -55,13 +58,11 @@ async def create_product(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
-    """Create new product."""
+    """Add new product if doesn't exist.\n
+    :param product_in: ProductCreateSchema schema input.\n
+    :return: Product created response."""
     try:
-        if current_user.user_type != UserType.ADMIN.value:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You're not able to perform this.",
-            )
+        await require_admin_user(current_user=current_user)
 
         if await product_crud.get_by_sku(sku=product_in.sku, db=db):
             raise HTTPException(
@@ -84,10 +85,12 @@ async def create_product(
 
 @product_router.get("/{product_id}", response_model=ProductResponseSchema)
 async def get_product(
-    product_id: str,
+    product_id: int,
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
-    """Get product by ID."""
+    """Retrieve product by it's ID.\n
+    :param product_id: productID.\n
+    :return: ProductResponseSchema response."""
     try:
         product = await product_crud.get(db=db, id=product_id)
         if not product:
@@ -115,13 +118,12 @@ async def update_product(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
-    """Update existing product."""
+    """Update product's info by it's ID.\n
+    :param product_id: productID.\n
+    :param product_in: ProductUpdateSchema input.\n
+    :return: ProductResponseSchema response."""
     try:
-        if current_user.user_type != UserType.ADMIN.value:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You're not able to perform this.",
-            )
+        require_admin_user(current_user=current_user)
 
         db_product = await product_crud.get(db=db, id=product_id)
         if not db_product:
