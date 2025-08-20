@@ -1,3 +1,4 @@
+"""This module handles auth funcs."""
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -8,8 +9,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import exceptions, jwt
 from passlib.context import CryptContext
 from sqlalchemy import select
-from sqlalchemy.orm import defer
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import defer
 
 from src import models
 from src.helpers.db import get_db
@@ -160,13 +161,12 @@ async def validate_token(token: str) -> None:
         )
 
 
-async def require_admin_user(current_user: models.User = Depends(get_current_user)) -> models.User:
+async def require_admin_user(current_user: models.User) -> None:
     """Require authenticated user to have admin privileges.
     :param current_user: Current authenticated user dependency.
     :return: User object if admin, raises exception otherwise."""
     if current_user.user_type != UserType.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admin users can create other users"
+            detail="You're not able to perform this.",
         )
-    return current_user
