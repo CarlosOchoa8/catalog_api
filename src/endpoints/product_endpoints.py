@@ -1,4 +1,6 @@
 """This module handles Product endpoints operations."""
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,11 +13,16 @@ from src.services.auth import get_current_user
 from src.services.auth.services import require_admin_user
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/products",
+    tags=["Products"]
+)
+# currentUser = Annotated(User, Depends(get_current_user))
 
 
 @router.post("/", response_model=ProductResponseSchema)
 async def create_product(
+    # usuario: currentUser,
     product_in: ProductCreateSchema,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -24,6 +31,7 @@ async def create_product(
     :param product_in: ProductCreateSchema schema input.\n
     :return: Product created response."""
     try:
+        # print("ESTE ES EL USUARIO QUE TENGO", usuario)
         await require_admin_user(current_user=current_user)
 
         if await product_crud.get_by_sku(sku=product_in.sku, db=db):

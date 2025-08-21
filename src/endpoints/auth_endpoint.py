@@ -1,12 +1,16 @@
-"""Authentication endpoints module."""
-from fastapi import APIRouter, Depends, status, HTTPException
+"""This module handle auth endpoint."""
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.helpers.db import get_db
 from src.schemas import TokenResponse, UserAuthSchema
 from src.services.auth import generate_token
 
-router = APIRouter()
+
+router = APIRouter(
+    prefix="/authenthicate",
+    tags=["Auth"]
+)
 
 
 @router.post('/', description='User authentication.', response_model=TokenResponse)

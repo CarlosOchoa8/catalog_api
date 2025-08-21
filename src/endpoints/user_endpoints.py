@@ -1,4 +1,6 @@
 """This module handles User endpoints."""
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,12 +12,18 @@ from src.services.auth import get_current_user
 from src.services.auth.services import require_admin_user
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/users",
+    tags=["Users"],
+    dependencies=[Depends(get_current_user)]
+)
+# currentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post("/", response_model=UserResponseSchema)
 async def create_user(
     user_in: UserCreateSchema,
+    # current_user: currentUser,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
     ) -> UserResponseSchema:
@@ -23,7 +31,8 @@ async def create_user(
     :param user_in: UserCreateSchema schema input.\n
     :return: UserResponseSchema response."""
     try:
-        require_admin_user(current_user=current_user)
+        print("YA ESTOY OBTENIENDO EL USUARIO", current_user)
+        await require_admin_user(current_user=current_user)
 
         if await user_crud.get_by_email(email=user_in.email, db=db):
             raise HTTPException(
