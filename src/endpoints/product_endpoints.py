@@ -20,20 +20,15 @@ router = APIRouter(
 # currentUser = Annotated(User, Depends(get_current_user))
 
 
-@router.post("/", response_model=ProductResponseSchema)
+@router.post("/", dependencies=[Depends(require_admin_user)], response_model=ProductResponseSchema)
 async def create_product(
-    # usuario: currentUser,
     product_in: ProductCreateSchema,
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
     """Add new product if doesn't exist.\n
     :param product_in: ProductCreateSchema schema input.\n
-    :return: Product created response."""
+    :return: ProductResponseSchema response."""
     try:
-        # print("ESTE ES EL USUARIO QUE TENGO", usuario)
-        await require_admin_user(current_user=current_user)
-
         if await product_crud.get_by_sku(sku=product_in.sku, db=db):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -81,11 +76,10 @@ async def get_product(
         ) from exc
 
 
-@router.put("/{product_id}", response_model=ProductResponseSchema)
+@router.put("/{product_id}", dependencies=[Depends(require_admin_user)], response_model=ProductResponseSchema)
 async def update_product(
     product_id: str,
     product_in: ProductUpdateSchema,
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
     """Update product's info by it's ID.\n
@@ -93,8 +87,6 @@ async def update_product(
     :param product_in: ProductUpdateSchema input.\n
     :return: ProductResponseSchema response."""
     try:
-        require_admin_user(current_user=current_user)
-
         db_product = await product_crud.get(db=db, id=product_id)
         if not db_product:
             raise HTTPException(
