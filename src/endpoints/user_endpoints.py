@@ -17,21 +17,19 @@ router = APIRouter(
     tags=["Users"],
     dependencies=[Depends(get_current_user)]
 )
-# currentUser = Annotated[User, Depends(get_current_user)]
+currentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post("/", response_model=UserResponseSchema)
 async def create_user(
     user_in: UserCreateSchema,
-    # current_user: currentUser,
-    current_user: User = Depends(get_current_user),
+    current_user: currentUser,
     db: AsyncSession = Depends(get_db)
     ) -> UserResponseSchema:
     """Add new user if doesn't exist.\n
     :param user_in: UserCreateSchema schema input.\n
     :return: UserResponseSchema response."""
     try:
-        print("YA ESTOY OBTENIENDO EL USUARIO", current_user)
         await require_admin_user(current_user=current_user)
 
         if await user_crud.get_by_email(email=user_in.email, db=db):
