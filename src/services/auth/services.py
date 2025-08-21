@@ -161,7 +161,7 @@ async def validate_token(token: str) -> None:
         )
 
 
-async def require_admin_user(current_user: models.User) -> None:
+async def require_admin_user(current_user: models.User = Depends(get_current_user)) -> None:
     """Require authenticated user to have admin privileges.
     :param current_user: Current authenticated user dependency.
     :return: User object if admin, raises exception otherwise."""

@@ -15,8 +15,11 @@ from src.services.auth.services import require_admin_user
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
-    dependencies=[Depends(get_current_user)]
-)
+    dependencies=[
+        Depends(require_admin_user),
+        Depends(get_current_user)
+        ]
+    )
 currentUser = Annotated[User, Depends(get_current_user)]
 
 
@@ -30,8 +33,6 @@ async def create_user(
     :param user_in: UserCreateSchema schema input.\n
     :return: UserResponseSchema response."""
     try:
-        await require_admin_user(current_user=current_user)
-
         if await user_crud.get_by_email(email=user_in.email, db=db):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
