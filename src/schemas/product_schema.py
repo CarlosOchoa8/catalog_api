@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from pydantic import BaseModel, Field, PositiveFloat
 
@@ -19,10 +20,14 @@ class ProductUpdateSchema(ProductBaseSchema):
 
 
 class ProductResponseSchema(ProductBaseSchema):
-    """A schema class for user response."""
+    """A schema class for product response."""
     created_at: datetime
     updated_at: datetime
 
     class Config:
         """SQLalchemy pydantic config class."""
         from_attributes = True
+
+class ProductsResponseSchema(BaseModel):
+    """A schema class products response."""
+    products: List[ProductResponseSchema]
