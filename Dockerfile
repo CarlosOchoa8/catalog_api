@@ -18,4 +18,5 @@ ENV TZ="America/Mexico_City"
 
 COPY . .
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+CMD ["sh", "-c", "python -m scripts.db_init && uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload"]
+# CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
