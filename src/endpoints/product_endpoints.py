@@ -1,14 +1,17 @@
 """This module handles Product endpoints operations."""
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import product_crud
 from src.helpers.db import get_db
+from src.middlewares.exceptions import (AlreadyExistException, ApiException,
+                                        NotFoundException)
 from src.models import User
 from src.schemas import (ProductCreateSchema, ProductResponseSchema,
-                         ProductUpdateSchema)
+                         ProductsResponseSchema, ProductUpdateSchema)
 from src.services.auth import get_current_user
 from src.services.auth.services import require_admin_user
 
@@ -30,27 +33,18 @@ async def create_product(
     :return: ProductResponseSchema response."""
     try:
         if await product_crud.get_by_sku(sku=product_in.sku, db=db):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="SKU already exists.",
-            )
+            raise AlreadyExistException(message="SKU already exists.")
 
         product = await product_crud.create(db=db, obj_in=product_in.model_dump())
         return ProductResponseSchema.model_validate(product)
 
-    except HTTPException as http_ex:
-        raise http_ex
     except Exception as exc:
-        print(exc)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error has occurred.",
-        ) from exc
+        raise exc
 
 
 @router.get("/{product_id}", response_model=ProductResponseSchema)
 async def get_product(
-    product_id: int,
+    product_id: UUID,
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
     """Retrieve product by it's ID.\n
@@ -59,26 +53,36 @@ async def get_product(
     try:
         product = await product_crud.get(db=db, id=product_id)
         if not product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Product not found.",
-            )
+            raise NotFoundException(message="Product not found.")
 
         return ProductResponseSchema.model_validate(product)
 
-    except HTTPException as http_ex:
-        raise http_ex
     except Exception as exc:
-        print(exc)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error has occurred.",
-        ) from exc
+        raise exc
+
+
+@router.get("/", response_model=ProductsResponseSchema)
+async def get_products(
+    db: AsyncSession = Depends(get_db)
+) -> ProductsResponseSchema:
+    """Retrieve products.\n
+    :return: ProductsResponseSchema response."""
+    try:
+        products = await product_crud.get_multi(db=db)
+        if not products:
+            raise NotFoundException(message="No products found.")
+
+        return ProductsResponseSchema(
+            products=[ProductResponseSchema.model_validate(prod) for prod in products]
+            )
+
+    except Exception as exc:
+        raise exc
 
 
 @router.put("/{product_id}", dependencies=[Depends(require_admin_user)], response_model=ProductResponseSchema)
 async def update_product(
-    product_id: str,
+    product_id: UUID,
     product_in: ProductUpdateSchema,
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
@@ -89,10 +93,7 @@ async def update_product(
     try:
         db_product = await product_crud.get(db=db, id=product_id)
         if not db_product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Product not found.",
-            )
+            raise NotFoundException(message="Product not found.")
 
         updated_product = await product_crud.update(
             db=db,
@@ -101,14 +102,8 @@ async def update_product(
         )
         return ProductResponseSchema.model_validate(updated_product)
 
-    except HTTPException as http_ex:
-        raise http_ex
     except Exception as exc:
-        print(exc)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error has occurred.",
-        ) from exc
+        raise exc
 
 
 product_router = router
