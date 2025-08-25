@@ -138,7 +138,7 @@ async def generate_token(db: AsyncSession, email: str, password: str) -> str:
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail='El usuario o la contraseña no coinciden',
+        detail="Email or Password doesn't match.",
     )
 
 
