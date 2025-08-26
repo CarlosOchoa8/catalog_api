@@ -28,6 +28,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
         content={
             "error": True,
             "message": "Internal Server error.",
+            "error_type": exc.__class__.__name__,
             "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
             "timestamp": datetime.now(tz=UTC).isoformat()
         },
