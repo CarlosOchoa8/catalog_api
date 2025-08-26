@@ -1,12 +1,13 @@
 """This module handles User endpoints."""
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import user_crud
 from src.helpers.db import get_db
-from src.middlewares.exceptions import AlreadyExistException
+from src.middlewares.exceptions import AlreadyExistException, NotFoundException
 from src.models import User
 from src.schemas import UserCreateSchema, UserResponseSchema
 from src.services.auth import get_current_user
@@ -39,6 +40,27 @@ async def create_user(
 
         user = await user_crud.create(db=db, obj_in=user_in.model_dump())
         return UserResponseSchema.model_validate(user)
+
+    except Exception as exc:
+        raise exc
+
+
+@router.get("/{user_id}", response_model=UserResponseSchema)
+async def get_user(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_db)
+    ) -> UserResponseSchema:
+    """Retrieve an user.\n
+    :param user_id: user identifier.\n
+    :return: UserResponseSchema response."""
+    try:
+        user = await user_crud.get(id=user_id, db=db)
+        if not user:
+            raise NotFoundException(
+                message="User not found."
+            )
+
+        return user
 
     except Exception as exc:
         raise exc
