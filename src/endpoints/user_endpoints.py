@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import user_crud
 from src.helpers.db import get_db
+from src.middlewares.exceptions import AlreadyExistException
 from src.models import User
 from src.schemas import UserCreateSchema, UserResponseSchema
 from src.services.auth import get_current_user
@@ -34,22 +35,13 @@ async def create_user(
     :return: UserResponseSchema response."""
     try:
         if await user_crud.get_by_email(email=user_in.email, db=db):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid email.",
-            )
+            raise AlreadyExistException(message="Invalid email.")
 
         user = await user_crud.create(db=db, obj_in=user_in.model_dump())
         return UserResponseSchema.model_validate(user)
 
-    except HTTPException as http_ex:
-        raise http_ex
     except Exception as exc:
-        print(exc)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error has occurred.",
-        ) from exc
+        raise exc
 
 
 user_router = router
