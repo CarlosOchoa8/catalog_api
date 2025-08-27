@@ -9,7 +9,7 @@ from src.crud import user_crud
 from src.helpers.db import get_db
 from src.middlewares.exceptions import AlreadyExistException, NotFoundException
 from src.models import User
-from src.schemas import UserCreateSchema, UserResponseSchema
+from src.schemas import UserCreateSchema, UserResponseSchema, UserUpdateSchema
 from src.services.auth import get_current_user
 from src.services.auth.services import require_admin_user
 
@@ -38,7 +38,7 @@ async def create_user(
         if await user_crud.get_by_email(email=user_in.email, db=db):
             raise AlreadyExistException(message="Invalid email.")
 
-        user = await user_crud.create(db=db, obj_in=user_in.model_dump())
+        user = await user_crud.create(db=db, obj_in=user_in.model_dump(exclude_unset=True))
         return UserResponseSchema.model_validate(user)
 
     except Exception as exc:
@@ -61,6 +61,30 @@ async def get_user(
             )
 
         return user
+
+    except Exception as exc:
+        raise exc
+
+
+@router.put("/{user_id}", response_model=UserResponseSchema)
+async def update_user(
+    user_id: UUID,
+    user_in: UserUpdateSchema,
+    db: AsyncSession = Depends(get_db)
+    ) -> UserResponseSchema:
+    """Retrieve an user.\n
+    :param user_id: user identifier.\n
+    :param user_in: user data to update.\n
+    :return: UserResponseSchema response."""
+    try:
+        db_user = await user_crud.get(id=user_id, db=db)
+        if not db_user:
+            raise NotFoundException(
+                message="User not found."
+            )
+
+        updated_user = await user_crud.update(db=db, db_obj=db_user, obj_in=user_in.model_dump(exclude_unset=True))
+        return UserResponseSchema.model_validate(updated_user)
 
     except Exception as exc:
         raise exc
