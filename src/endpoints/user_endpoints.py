@@ -1,5 +1,5 @@
 """This module handles User endpoints."""
-from typing import Annotated
+from typing import Annotated, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
@@ -9,7 +9,8 @@ from src.crud import user_crud
 from src.helpers.db import get_db
 from src.middlewares.exceptions import AlreadyExistException, NotFoundException
 from src.models import User
-from src.schemas import UserCreateSchema, UserResponseSchema, UserUpdateSchema
+from src.schemas import (ListUserResponseSchema, UserCreateSchema,
+                         UserResponseSchema, UserUpdateSchema)
 from src.services.auth import get_current_user
 from src.services.auth.services import require_admin_user
 
@@ -40,6 +41,33 @@ async def create_user(
 
         user = await user_crud.create(db=db, obj_in=user_in.model_dump(exclude_unset=True))
         return UserResponseSchema.model_validate(user)
+
+    except Exception as exc:
+        raise exc
+
+
+@router.get("/", response_model=ListUserResponseSchema)
+async def get_users(
+    offset: Optional[int] = 0,
+    limit: Optional[int] = 100,
+    db: AsyncSession = Depends(get_db)
+    ) -> ListUserResponseSchema:
+    """Retrieve all users.\n
+    :param offset: Records to find starting from.\n
+    :param limit: Qty of records to being retrieved.\n
+    :return: UserResponseSchema response."""
+    try:
+        users = await user_crud.get_multi(db=db, skip=offset, limit=limit)
+        if not users:
+            raise NotFoundException(
+                message="Users not found."
+            )
+
+        return ListUserResponseSchema(
+            user_data=users,
+            total=len(users),
+            page=(offset // limit) + 1 if limit else 1
+        )
 
     except Exception as exc:
         raise exc

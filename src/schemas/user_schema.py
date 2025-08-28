@@ -1,6 +1,6 @@
 """This module handles user schemas."""
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -58,3 +58,10 @@ class UserResponseSchema(UserBaseSchema):
     class Config:
         """SQLalchemy pydantic config class."""
         from_attributes = True
+
+
+class ListUserResponseSchema(BaseModel):
+    """A schema class for user list response."""
+    user_data: List[UserResponseSchema]
+    total: int
+    page: int
