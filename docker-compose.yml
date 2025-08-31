@@ -33,8 +33,10 @@ services:
       - "5555:5432"
 
   migration:
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=${DATABASE_URL_DBMATE}
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_NAME}?sslmode=disable"
     image: ${IMAGE_NAME}
     networks:
       - catalog-api
@@ -42,8 +44,6 @@ services:
     depends_on:
       - db
       - catalog-service
-    env_file:
-      - .env
 
 volumes:
   dbdata:
