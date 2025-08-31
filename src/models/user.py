@@ -7,7 +7,6 @@ from src.utils.enumerators import UserType
 
 class User(Base):
     """User SQLAlchemy Model."""
-    __tablename__ = "users"
 
     email: Mapped[str] = mapped_column(
         String(255),
