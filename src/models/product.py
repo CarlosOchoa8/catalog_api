@@ -6,7 +6,6 @@ from src.database.base import Base
 
 class Product(Base):
     """Product SQLAlchemy Model."""
-    __tablename__ = "products"
 
     sku: Mapped[str] = mapped_column(
         String(255), unique=True,
