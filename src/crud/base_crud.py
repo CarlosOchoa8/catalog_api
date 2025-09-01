@@ -32,9 +32,13 @@ class CRUDBase:
         return result.scalar_one_or_none()
 
     async def get_multi(self, db: AsyncSession, skip: int = 0, limit: int = 100):
-        """Get multiple objects"""
-        result = await db.execute(select(self.model).offset(skip).limit(limit))
-        return result.scalars().all()
+        """Retrieve multiple objects of self.model type.\n
+        :param skip: results to skip before retrieve records.\n
+        :param limit: qty of objs to retrieve.\n
+        :return: list of self.model objs."""
+        stmt = select(self.model).offset(skip).limit(limit=limit)
+        result = await db.scalars(stmt)
+        return result.all()
 
     async def update(self, db: AsyncSession, db_obj: Union[User, Product], obj_in: dict):
         """Update object"""
