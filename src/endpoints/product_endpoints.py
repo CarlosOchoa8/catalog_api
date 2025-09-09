@@ -2,7 +2,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import product_crud
@@ -12,20 +12,22 @@ from src.middlewares.exceptions import (AlreadyExistException, ApiException,
 from src.models import User
 from src.schemas import (ProductCreateSchema, ProductResponseSchema,
                          ProductsResponseSchema, ProductUpdateSchema)
-from src.services.auth import get_current_user
-from src.services.auth.services import require_admin_user
+from src.services.audit import AuditService
+from src.services.auth.services import get_current_user, require_admin_user
 
 
 router = APIRouter(
     prefix="/products",
     tags=["Products"]
 )
-# currentUser = Annotated(User, Depends(get_current_user))
+currentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post("/", dependencies=[Depends(require_admin_user)], response_model=ProductResponseSchema)
 async def create_product(
     product_in: ProductCreateSchema,
+    current_user: currentUser,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
     """Add new product if doesn't exist.\n
@@ -36,6 +38,11 @@ async def create_product(
             raise AlreadyExistException(message="SKU already exists.")
 
         product = await product_crud.create(db=db, obj_in=product_in.model_dump())
+        await AuditService.register(
+            current_user=current_user, db=db, request=request,
+            action=product_crud.create, data=product_in.model_dump()
+            )
+
         return ProductResponseSchema.model_validate(product)
 
     except Exception as exc:
