@@ -1,3 +1,4 @@
+"""This module tries to audit actions."""
 import inspect
 
 from fastapi import Request
@@ -31,11 +32,9 @@ class AuditService:
             }
 
             audit_obj = AuditLog(**obj_data)
-            1/0
+
             db.add(audit_obj)
             await db.commit()
 
         except Exception as e:
-            db.rollback()
-            logger.error("An unexpected error handling logs has occurred.")
-            logger.error(e)
+            logger.error(f"An unexpected error handling logs has occurred. {e}")
