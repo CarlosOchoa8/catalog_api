@@ -15,13 +15,21 @@ class AuditService:
 
     @staticmethod
     async def register(*args, **kwargs) -> None:
-        """Register actions completed from endpoint and store them."""
+        """Register actions completed from endpoint and store them.\n
+        :Arg user: user db obj.
+        :Arg db: Async db connection.
+        :Arg req: Request object.
+        :Arg action: Main action func performed to been tracked.
+        :Arg data[optional]: Any data to being store or changed in db.
+        """
         try:
             user = kwargs.get("current_user")
             db = kwargs.get("db")
             req: Request = kwargs.get("request")
             action = kwargs.get("action")
-            # data = kwargs.get("data")
+            data = kwargs.get("data")
+            print("++DATA QUE ESTOY MANDNDO =>", data)
+            print("++REQUEST =>", req)
 
             obj_data = {
                 "user_id": user.id or None,
