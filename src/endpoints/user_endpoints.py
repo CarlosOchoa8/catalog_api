@@ -2,7 +2,7 @@
 from typing import Annotated, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import user_crud
@@ -11,6 +11,7 @@ from src.middlewares.exceptions import AlreadyExistException, NotFoundException
 from src.models import User
 from src.schemas import (ListUserResponseSchema, UserCreateSchema,
                          UserResponseSchema, UserUpdateSchema)
+from src.services.audit import AuditService
 from src.services.auth import get_current_user
 from src.services.auth.services import require_admin_user
 
@@ -30,6 +31,7 @@ currentUser = Annotated[User, Depends(get_current_user)]
 async def create_user(
     user_in: UserCreateSchema,
     current_user: currentUser,
+    request: Request,
     db: AsyncSession = Depends(get_db)
     ) -> UserResponseSchema:
     """Add new user if doesn't exist.\n
@@ -40,6 +42,11 @@ async def create_user(
             raise AlreadyExistException(message="Invalid email.")
 
         user = await user_crud.create(db=db, obj_in=user_in.model_dump(exclude_unset=True))
+        await AuditService.register(
+            current_user=current_user, db=db, request=request,
+            action=user_crud.create, data=user_in.model_dump()
+            )
+
         return UserResponseSchema.model_validate(user)
 
     except Exception as exc:
@@ -98,6 +105,8 @@ async def get_user(
 async def update_user(
     user_id: UUID,
     user_in: UserUpdateSchema,
+    current_user: currentUser,
+    request: Request,
     db: AsyncSession = Depends(get_db)
     ) -> UserResponseSchema:
     """Retrieve an user.\n
@@ -112,6 +121,11 @@ async def update_user(
             )
 
         updated_user = await user_crud.update(db=db, db_obj=db_user, obj_in=user_in.model_dump(exclude_unset=True))
+        await AuditService.register(
+            current_user=current_user, db=db, request=request,
+            action=user_crud.update, data=user_in.model_dump()
+            )
+
         return UserResponseSchema.model_validate(updated_user)
 
     except Exception as exc:
