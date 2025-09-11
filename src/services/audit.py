@@ -28,8 +28,6 @@ class AuditService:
             req: Request = kwargs.get("request")
             action = kwargs.get("action")
             data = kwargs.get("data")
-            print("++DATA QUE ESTOY MANDNDO =>", data)
-            print("++REQUEST =>", req)
 
             obj_data = {
                 "user_id": user.id or None,
