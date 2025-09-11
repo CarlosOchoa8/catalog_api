@@ -20,5 +20,13 @@ class CRUDProduct(CRUDBase):
         stmt = select(self.model).where(self.model.sku == sku)
         return await db.scalar(stmt)
 
+    async def get_by_name(self, name: str, db: AsyncSession):
+        """Retrieve product by its name.
+        :param name: Product name to search for.
+        :param db: Async database session.
+        :return: Product object if found, None otherwise."""
+        stmt = select(self.model).where(self.model.name == name)
+        return await db.scalar(stmt)
+
 
 product_crud = CRUDProduct(Product)
