@@ -2,13 +2,12 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import product_crud
 from src.helpers.db import get_db
-from src.middlewares.exceptions import (AlreadyExistException, ApiException,
-                                        NotFoundException)
+from src.middlewares.exceptions import AlreadyExistException, NotFoundException
 from src.models import User
 from src.schemas import (ProductCreateSchema, ProductResponseSchema,
                          ProductsResponseSchema, ProductUpdateSchema)
@@ -91,6 +90,8 @@ async def get_products(
 async def update_product(
     product_id: UUID,
     product_in: ProductUpdateSchema,
+    current_user: currentUser,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
     """Update product's info by it's ID.\n
@@ -102,11 +103,22 @@ async def update_product(
         if not db_product:
             raise NotFoundException(message="Product not found.")
 
+        if await product_crud.get_by_sku(sku=product_in.sku, db=db):
+            raise AlreadyExistException(message="Sky already exists.")
+
+        if await product_crud.get_by_name(name=product_in.name, db=db):
+            raise AlreadyExistException(message="Name already exists.")
+
         updated_product = await product_crud.update(
             db=db,
             db_obj=db_product,
             obj_in=product_in.model_dump(exclude_unset=True)
         )
+        await AuditService.register(
+            current_user=current_user, db=db, request=request,
+            action=product_crud.update, data=product_in.model_dump()
+            )
+
         return ProductResponseSchema.model_validate(updated_product)
 
     except Exception as exc:
