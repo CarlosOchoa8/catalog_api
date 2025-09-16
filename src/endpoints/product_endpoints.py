@@ -2,7 +2,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import product_crud
@@ -13,6 +13,7 @@ from src.schemas import (ProductCreateSchema, ProductResponseSchema,
                          ProductsResponseSchema, ProductUpdateSchema)
 from src.services.audit import AuditService
 from src.services.auth.services import get_current_user, require_admin_user
+from src.services.email import EmailService
 
 
 router = APIRouter(
@@ -92,6 +93,7 @@ async def update_product(
     product_in: ProductUpdateSchema,
     current_user: currentUser,
     request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ) -> ProductResponseSchema:
     """Update product's info by it's ID.\n
@@ -117,6 +119,11 @@ async def update_product(
         await AuditService.register(
             current_user=current_user, db=db, request=request,
             action=product_crud.update, data=product_in.model_dump()
+            )
+
+        background_tasks.add_task(
+            EmailService.notify_admin,
+            message=f"Product {product_id} has been updated by user {current_user.id}"
             )
 
         return ProductResponseSchema.model_validate(updated_product)
