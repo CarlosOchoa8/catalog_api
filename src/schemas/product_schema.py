@@ -1,5 +1,7 @@
+"""This module handle all Product related pydantic schemas."""
 from datetime import datetime
 from typing import List
+from uuid import UUID
 
 from pydantic import BaseModel, Field, PositiveFloat
 
@@ -21,6 +23,7 @@ class ProductUpdateSchema(ProductBaseSchema):
 
 class ProductResponseSchema(ProductBaseSchema):
     """A schema class for product response."""
+    id: UUID
     created_at: datetime
     updated_at: datetime
 
