@@ -7,12 +7,13 @@ RUN apt-get update \
     && apt-get -y install libpq-dev curl
 
 # DBMATE
-RUN curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
-RUN chmod +x /usr/local/bin/dbmate
+RUN curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64 \
+    && chmod +x /usr/local/bin/dbmate
 
 COPY ./requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip \ 
+    && pip install --no-cache-dir -r requirements.txt
+# RUN pip install -r requirements.txt
 
 ENV TZ="America/Mexico_City"
 
