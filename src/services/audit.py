@@ -1,11 +1,10 @@
 """This module tries to audit actions."""
-import inspect
 
 from fastapi import Request
 
-from src.middlewares.exceptions import AppException
 from src.models import AuditLog
 from src.utils.logger import get_logger
+
 
 logger = get_logger()
 
