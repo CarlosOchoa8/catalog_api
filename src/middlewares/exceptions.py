@@ -63,10 +63,18 @@ async def validation_request_exception_handler(request: Request, exc: Validation
         content={
             "error": True,
             "message": "Requested data missing.",
+            "error_type": exc.__class__.__name__,
             "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY,
             "details": errors
         }
     )
+
+
+class AppException(Exception):
+    """Base built in Exception class."""
+    def __init__(self, *args):
+        super().__init__(*args)
+
 
 class ApiException(HTTPException):
     """Base HTTPException class."""
