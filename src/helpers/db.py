@@ -1,3 +1,4 @@
+"""This module handle db async connection."""
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +14,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
         except Exception as exc:
             await db.rollback()
-            await db.close()
+            # await db.close()
             raise exc
-        finally:
-            await db.close()
+        # finally:
+        #     await db.close()
