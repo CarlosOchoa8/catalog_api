@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import product_crud
 from src.helpers.db import get_db
-from src.middlewares.exceptions import AlreadyExistException, NotFoundException
+from src.middlewares.exceptions import (AlreadyExistException, AppException,
+                                        NotFoundException)
 from src.models import User
 from src.schemas import (ProductCreateSchema, ProductResponseSchema,
                          ProductsResponseSchema, ProductUpdateSchema)
@@ -45,7 +46,7 @@ async def create_product(
 
         return ProductResponseSchema.model_validate(product)
 
-    except Exception as exc:
+    except AppException as exc:
         raise exc
 
 
@@ -64,7 +65,7 @@ async def get_product(
 
         return ProductResponseSchema.model_validate(product)
 
-    except Exception as exc:
+    except AppException as exc:
         raise exc
 
 
@@ -83,7 +84,7 @@ async def get_products(
             products=[ProductResponseSchema.model_validate(prod) for prod in products]
             )
 
-    except Exception as exc:
+    except AppException as exc:
         raise exc
 
 
@@ -128,7 +129,7 @@ async def update_product(
 
         return ProductResponseSchema.model_validate(updated_product)
 
-    except Exception as exc:
+    except AppException as exc:
         raise exc
 
 
