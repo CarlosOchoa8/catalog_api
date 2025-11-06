@@ -3,9 +3,9 @@ from datetime import UTC, datetime
 from typing import Any, Dict, Optional
 
 from fastapi import HTTPException, Request, status
-from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -29,6 +29,19 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
             "error": True,
             "message": "Internal Server error.",
             "error_type": exc.__class__.__name__,
+            "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "timestamp": datetime.now(tz=UTC).isoformat()
+        },
+    )
+
+async def sql_exception_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
+    """Global exception handler for any SqlAlchemyError."""
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": True,
+            "message": "Internal Server error.",
+            "error_type": ApiException.__name__,
             "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
             "timestamp": datetime.now(tz=UTC).isoformat()
         },
