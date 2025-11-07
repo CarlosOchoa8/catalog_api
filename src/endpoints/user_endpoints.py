@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import user_crud
 from src.helpers.db import get_db
-from src.middlewares.exceptions import AlreadyExistException, NotFoundException
+from src.middlewares.exceptions import (AlreadyExistException, AppException,
+                                        NotFoundException)
 from src.models import User
 from src.schemas import (ListUserResponseSchema, UserCreateSchema,
                          UserResponseSchema, UserUpdateSchema)
@@ -49,7 +50,7 @@ async def create_user(
 
         return UserResponseSchema.model_validate(user)
 
-    except Exception as exc:
+    except AppException as exc:
         raise exc
 
 
@@ -76,7 +77,7 @@ async def get_users(
             page=(offset // limit) + 1 if limit else 1
         )
 
-    except Exception as exc:
+    except AppException as exc:
         raise exc
 
 
@@ -97,7 +98,7 @@ async def get_user(
 
         return user
 
-    except Exception as exc:
+    except AppException as exc:
         raise exc
 
 
@@ -128,7 +129,7 @@ async def update_user(
 
         return UserResponseSchema.model_validate(updated_user)
 
-    except Exception as exc:
+    except AppException as exc:
         raise exc
 
 
